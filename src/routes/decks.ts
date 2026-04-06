@@ -25,6 +25,7 @@ router.post("/", async (req, res) => {
 
 router.post("/:id/cards", async (req, res) => {
   const {card_list} = req.body;
+  const failedCards: string[] = [];
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
   if (!card_list) {
     res.status(400).send({ error: "card_list is required." });
@@ -51,24 +52,32 @@ router.post("/:id/cards", async (req, res) => {
   for (const card of workableCardList) {
     const scryfallLookup = `https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(card.name)}`;
     const response = await fetch(scryfallLookup);
+    let resJson = null;
     if (!response.ok) {
-      res.status(404).send({ error: `Scryfall card not found for ${card.name}.` });
-      return;
+      await sleep(500); // Sleep for 500ms before the next request to avoid hitting rate limits
+      const retry = await fetch(scryfallLookup);
+      if (!retry.ok) {
+      failedCards.push(card.name);
+      continue;
+      }
+      const retryJson = await retry.json();
+      resJson = retryJson;
+    } else {
+      resJson = await response.json();
     }
-    const resJson = await response.json();
     const { error } = await supabase.from("decklist_cards").insert([{
       deck_id: req.params.id,
       scryfall_id: resJson.id,
       quantity: card.count,
       is_sideboard: card.is_sideboard
     }]);
-    await sleep
+    await sleep(200); // Sleep for 200ms before the next request to avoid hitting rate limits
     if (error) {
       res.status(500).send({ error: error.message });
       return;
     }
   }
-   res.send({ message: "Cards added successfully." });
+   res.send({ message: "Cards added successfully.", failedCards });
 });
 
 export default router;
