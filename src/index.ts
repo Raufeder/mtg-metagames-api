@@ -3,8 +3,12 @@ import metagamesRouter from "./routes/metagames.js";
 import tournamentsRouter from "./routes/tournaments.js";
 import archetypesRouter from "./routes/archetypes.js";
 import decksRouter from "./routes/decks.js";
+import cors from "cors";
 
 const app = express();
+app.use(cors({
+  origin: "https://mtg-metagames-web.vercel.app"
+}));
 app.use(express.json());
 app.use("/metagames", metagamesRouter);
 app.use("/tournaments", tournamentsRouter);
