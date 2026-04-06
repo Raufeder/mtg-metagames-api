@@ -26,28 +26,38 @@ router.post("/:id/sets", async (req, res) => {
       res.status(400).send({ error: "set_code is required." });
       return;
   }
-  const scryfallURL = `https://api.scryfall.com/sets/${set_code.toLowerCase()}`;
-  const response = await fetch(scryfallURL);
-    if (!response.ok) {
-      res.status(404).send({ error: "Scryfall set not found." });
-      return;
-  }
-  const resJson = await response.json()
-  const { data, error } = await supabase.from("sets").upsert([{
-      scryfall_id: resJson.id,
-      icon_set_image: resJson.icon_svg_uri
-  }], { onConflict: "scryfall_id" }).select("*").single();
-  const { error: metagameSetError } = await supabase.from("metagame_sets").insert([{
-      metagame_id: req.params.id,
-      set_id: resJson.id,
-  }]).select("*").single();
+  let setId = null;
+  const { data, error } = await supabase.from("sets").select("*").eq("set_code", set_code.toLowerCase()).single();
   if (error) {
-      res.status(500).send({ error: error.message });
-  } else if (metagameSetError) {
+      const scryfallURL = `https://api.scryfall.com/sets/${set_code.toLowerCase()}`;
+      const response = await fetch(scryfallURL);
+        if (!response.ok) {
+          res.status(404).send({ error: "Scryfall set not found." });
+          return;
+        }
+      const resJson = await response.json()
+      setId = resJson.id;
+      const { error } = await supabase.from("sets").upsert([{
+        scryfall_id: resJson.id,
+        icon_set_image: resJson.icon_svg_uri,
+        name: resJson.name,
+        set_code: resJson.code
+      }], { onConflict: "scryfall_id" }).select("*").single();
+  if (error) {
+    res.status(500).send({ error: error.message });
+    return;
+  }} else {
+    setId = data.scryfall_id;
+  }
+    const { error: metagameSetError } = await supabase.from("metagame_sets").insert([{
+      metagame_id: req.params.id,
+      set_id: setId,
+    }]).select("*").single();
+  if (metagameSetError) {
     res.status(500).send({ error: metagameSetError.message });
     return;
-  } else {
-      res.send(data);
+  } else {  
+  res.send({ message: "Set added to metagame successfully." });
   }
 });
 
