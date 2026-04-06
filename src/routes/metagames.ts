@@ -33,10 +33,10 @@ router.post("/:id/sets", async (req, res) => {
       return;
   }
   const resJson = await response.json()
-  const { data, error } = await supabase.from("sets").insert([{
+  const { data, error } = await supabase.from("sets").upsert([{
       scryfall_id: resJson.id,
       icon_set_image: resJson.icon_svg_uri
-  }]).select("*").single();
+  }], { onConflict: "scryfall_id" }).select("*").single();
   const { error: metagameSetError } = await supabase.from("metagame_sets").insert([{
       metagame_id: req.params.id,
       set_id: resJson.id,
