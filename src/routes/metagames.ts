@@ -127,12 +127,12 @@ router.post("/:id/tournaments", async (req, res) => {
 });
 
 router.post("/:id/archetypes", async (req, res) => {
-  const { name } = req.body;
+  const { name, colors } = req.body;
   if (!name) {
     res.status(400).send({ error: "name is required." });
     return;
   }
-  const { data, error } = await supabase.from("archetypes").upsert({ name }, { onConflict: "name" }).select("*").single()
+  const { data, error } = await supabase.from("archetypes").upsert({ name, colors }, { onConflict: "name" }).select("*").single()
     if (error) {
     res.status(500).send({ error: error.message });
     return;
