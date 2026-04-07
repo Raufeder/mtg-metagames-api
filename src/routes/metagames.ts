@@ -66,15 +66,15 @@ router.post("/", async (req, res) => {
 });
 
 router.post("/:id/sets", async (req, res) => {
-  const {set_code} = req.body;
-  if (!set_code) {
-      res.status(400).send({ error: "set_code is required." });
+  const {set_name} = req.body;
+  if (!set_name) {
+      res.status(400).send({ error: "set_name is required." });
       return;
   }
   let setId = null;
-  const { data, error } = await supabase.from("sets").select("*").eq("set_code", set_code.toLowerCase()).single();
+  const { data, error } = await supabase.from("sets").select("*").eq("name", set_name).single();
   if (error) {
-      const scryfallURL = `https://api.scryfall.com/sets/${set_code.toLowerCase()}`;
+      const scryfallURL = `https://api.scryfall.com/sets/${set_name.toLowerCase()}`;
       const response = await fetch(scryfallURL);
         if (!response.ok) {
           res.status(404).send({ error: "Scryfall set not found." });
