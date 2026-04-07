@@ -3,15 +3,60 @@ import { supabase } from "../supabase.js";
 
 const router = Router();
 
+router.get("/", async (req, res) => {
+  const { data, error } = await supabase.from("metagames").select("*");
+  if (error) {
+    res.status(500).send({ error: error.message });
+  } else {
+    res.send(data);
+  }
+});
+
+router.get("/:id", async (req, res) => {
+  const { data, error } = await supabase.from("metagames").select("*, tournaments(*), metagames_archetypes(archetypes(*), metagame_banlist(*)), metagame_sets(sets(*))")
+  .eq("id", req.params.id)
+  .single();
+  if (error) {
+    res.status(500).send({ error: error.message });
+  } else {
+    res.send(data);
+  }
+});
+
+router.get("/:id/tournaments/:tournament_id", async (req, res) => {
+  const { data, error } = await supabase.from("tournaments").select("*, decks(*, archetypes(*))")
+  .eq("id", req.params.tournament_id)
+  .eq("metagame_id", req.params.id)
+  .single();
+  if (error) {
+    res.status(500).send({ error: error.message });
+  } else {
+    res.send(data);
+  }
+});
+
+router.get("/:id/archetypes/:archetype_id", async (req, res) => {
+  const { data, error } = await supabase.from("archetypes").select("*, decks(*, tournaments(*))")
+  .eq("id", req.params.archetype_id)
+  .eq("metagames_archetypes.metagame_id", req.params.id)
+  .single();
+  if (error) {
+    res.status(500).send({ error: error.message });
+  } else {
+    res.send(data);
+  }
+});
+
 router.post("/", async (req, res) => {
-  const {start_date, end_date} = req.body;
-  if (!start_date || !end_date) {
-      res.status(400).send({ error: "start_date and end_date are required." });
+  const {start_date, end_date, name} = req.body;
+  if (!start_date || !end_date || !name) {
+      res.status(400).send({ error: "start_date, end_date, and name are required." });
       return;
   }
   const { data, error } = await supabase.from("metagames").insert([{
     start_date: start_date,
-    end_date: end_date
+    end_date: end_date,
+    name: name
   }]).select("*").single();
   if (error) {
     res.status(500).send({ error: error.message });

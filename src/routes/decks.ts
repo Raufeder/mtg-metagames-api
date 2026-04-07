@@ -3,6 +3,15 @@ import { supabase } from "../supabase.js";
 
 const router = Router();
 
+router.get("/:id", async (req, res) => {
+  const { data, error } = await supabase.from("decks").select("*, archetypes(*), tournaments(*), decklist_cards(*)").eq("id", req.params.id).single();
+  if (error) {
+    res.status(500).send({ error: error.message });
+  } else {
+    res.send(data);
+  }
+});
+
 router.post("/", async (req, res) => {
   const { archetype_id, tournament_id, player_name, name, placement } = req.body;
   if (!archetype_id || !tournament_id || !player_name || !name) {
