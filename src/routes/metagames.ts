@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-  const { data, error } = await supabase.from("metagames").select("*, tournaments(*), metagames_archetypes(archetypes(*), metagame_banlist(*)), metagame_sets(sets(*))")
+  const { data, error } = await supabase.from("metagames").select("*, tournaments(*), metagames_archetypes(archetypes(*)), metagame_banlist(*), metagame_sets(sets(*))")
   .eq("id", req.params.id)
   .single();
   if (error) {
