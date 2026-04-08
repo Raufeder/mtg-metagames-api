@@ -8,7 +8,9 @@ import cors from "cors";
 
 const app = express();
 app.use(cors({
-  origin: "https://mtg-metagames-web.vercel.app"
+  origin: ["https://mtg-metagames-web.vercel.app",
+            "http://localhost:3000"
+          ]
 }));
 app.use(express.json());
 app.use("/metagames", metagamesRouter);

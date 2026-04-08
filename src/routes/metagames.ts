@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-  const { data, error } = await supabase.from("metagames").select("*, tournaments(*), metagames_archetypes(archetypes(*)), metagame_banlist(*), metagame_sets(sets(*))")
+  const { data, error } = await supabase.from("metagames").select("*, tournaments(*), metagames_archetypes(archetypes(*)), metagame_banlist(*), metagame_restrictedlist(*), metagame_sets(sets(*))")
   .eq("id", req.params.id)
   .single();
   if (error) {
@@ -178,6 +178,36 @@ router.post("/:id/banlist", async (req, res) => {
     }
   }
    res.send({ message: "Cards added to banlist successfully." });
+});
+
+router.post("/:id/restrictedlist", async (req, res) => {
+  const {card_list} = req.body;
+  if (!card_list) {
+    res.status(400).send({ error: "card_list is required." });
+    return;
+  }
+  const splitStrings = card_list.split("\n");
+  for (const card of splitStrings) {
+    if (!card.trim()) {
+      continue;
+    }
+    const scryfallLookup = `https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(card)}`;
+    const response = await fetch(scryfallLookup);
+    if (!response.ok) {
+      res.status(404).send({ error: `Scryfall card not found for ${card}.` });
+      return;
+    }
+    const resJson = await response.json();
+    const { error } = await supabase.from("metagame_restrictedlist").insert([{
+      metagame_id: req.params.id,
+      scryfall_id: resJson.id,
+    }]);
+    if (error) {
+      res.status(500).send({ error: error.message });
+      return;
+    }
+  }
+   res.send({ message: "Cards added to restrictedlist successfully." });
 });
 
 export default router;
