@@ -36,7 +36,7 @@ router.get("/:id/tournaments/:tournament_id", async (req, res) => {
   }
 });
 
-router.get("/:id/archetypes/:archetype_id", ValidateJWTMiddleware, async (req, res) => {
+router.get("/:id/archetypes/:archetype_id", async (req, res) => {
   const { data, error } = await supabase.from("archetypes").select("*, decks(*, tournaments!inner(*))")
 .eq("id", req.params.archetype_id)
 .eq("decks.tournaments.metagame_id", req.params.id)
@@ -48,7 +48,7 @@ router.get("/:id/archetypes/:archetype_id", ValidateJWTMiddleware, async (req, r
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", ValidateJWTMiddleware, async (req, res) => {
   const {start_date, end_date, name, format} = req.body;
   const acceptableFormats = ["Standard", "Modern", "Pioneer", "Legacy", "Vintage", "Block", "Extended"];
   if (!start_date || !end_date || !name) {
