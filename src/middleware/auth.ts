@@ -14,7 +14,11 @@ const ValidateJWTMiddleware = async (req: Request, res: Response, next: NextFunc
       }
       const jwk = JSON.parse(process.env.SUPABASE_JWT_PUBLIC_KEY as string);
       const publicKey = await importJWK(jwk, "ES256");
-      await jwtVerify(token, publicKey);
+      const { payload } = await jwtVerify(token, publicKey);
+      if ((payload as any).app_metadata?.role !== "admin") {
+        res.status(403).send({ error: "Forbidden." });
+        return;
+      }
       next();
     } catch (err) {
       res.status(401).send({ error: "Invalid token." });
