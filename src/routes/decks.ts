@@ -1,5 +1,6 @@
 import {Router} from "express";
 import { supabase } from "../supabase.js";
+import ValidateJWTMiddleware from "../middleware/auth.js";
 
 const router = Router();
 
@@ -12,7 +13,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", ValidateJWTMiddleware, async (req, res) => {
   const { archetype_id, tournament_id, player_name, name, placement } = req.body;
   if (!archetype_id || !tournament_id || !player_name || !name) {
     res.status(400).send({ error: "All fields except placement are required." });
@@ -32,7 +33,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.post("/:id/cards", async (req, res) => {
+router.post("/:id/cards", ValidateJWTMiddleware, async (req, res) => {
   const {card_list} = req.body;
   const failedCards: string[] = [];
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));

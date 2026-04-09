@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { supabase } from "../supabase.js";
+import ValidateJWTMiddleware from "../middleware/auth.js";
 
 const router = Router();
 
@@ -35,7 +36,7 @@ router.get("/:id/tournaments/:tournament_id", async (req, res) => {
   }
 });
 
-router.get("/:id/archetypes/:archetype_id", async (req, res) => {
+router.get("/:id/archetypes/:archetype_id", ValidateJWTMiddleware, async (req, res) => {
   const { data, error } = await supabase.from("archetypes").select("*, decks(*, tournaments!inner(*))")
 .eq("id", req.params.archetype_id)
 .eq("decks.tournaments.metagame_id", req.params.id)
@@ -71,7 +72,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.post("/:id/sets", async (req, res) => {
+router.post("/:id/sets", ValidateJWTMiddleware, async (req, res) => {
   const {set_name} = req.body;
   if (!set_name) {
       res.status(400).send({ error: "set_name is required." });
@@ -112,7 +113,7 @@ router.post("/:id/sets", async (req, res) => {
   }
 });
 
-router.post("/:id/tournaments", async (req, res) => {
+router.post("/:id/tournaments", ValidateJWTMiddleware, async (req, res) => {
   const { name, start_date, end_date, location } = req.body;
   if (!name || !start_date || !end_date || !location) {
     res.status(400).send({ error: "name, start_date, end_date, and location are required." });
@@ -132,7 +133,7 @@ router.post("/:id/tournaments", async (req, res) => {
   }
 });
 
-router.post("/:id/archetypes", async (req, res) => {
+router.post("/:id/archetypes", ValidateJWTMiddleware, async (req, res) => {
   const { name, colors } = req.body;
   if (!name) {
     res.status(400).send({ error: "name is required." });
@@ -156,7 +157,7 @@ router.post("/:id/archetypes", async (req, res) => {
   }
 });
 
-router.post("/:id/banlist", async (req, res) => {
+router.post("/:id/banlist", ValidateJWTMiddleware, async (req, res) => {
   const {card_list} = req.body;
   if (!card_list) {
     res.status(400).send({ error: "card_list is required." });
@@ -186,7 +187,7 @@ router.post("/:id/banlist", async (req, res) => {
    res.send({ message: "Cards added to banlist successfully." });
 });
 
-router.post("/:id/restrictedlist", async (req, res) => {
+router.post("/:id/restrictedlist", ValidateJWTMiddleware, async (req, res) => {
   const {card_list} = req.body;
   if (!card_list) {
     res.status(400).send({ error: "card_list is required." });

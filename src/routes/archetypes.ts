@@ -1,8 +1,9 @@
 import {Router} from "express";
 import { supabase } from "../supabase.js";
+import ValidateJWTMiddleware from "../middleware/auth.js";
 
 const router = Router();
-router.post("/", async (req, res) => {
+router.post("/", ValidateJWTMiddleware, async (req, res) => {
   const { name, colors } = req.body;
     const validColors = ["W", "U", "B", "R", "G", "C"];
   if (!name) {
