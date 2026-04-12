@@ -36,13 +36,13 @@ router.post("/", ValidateJWTMiddleware, async (req, res) => {
 router.post("/:id/cards", ValidateJWTMiddleware, async (req, res) => {
   const {card_list} = req.body;
   const failedCards: string[] = [];
-  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
   if (!card_list) {
     res.status(400).send({ error: "card_list is required." });
     return;
   }
   const splitStrings = card_list.split("\n");
   const workableCardList = [];
+  const insertRows = [];
   let isSideboard = false;
   for (const str of splitStrings) {
     const countAndName = str.split(" ");
@@ -59,35 +59,41 @@ router.post("/:id/cards", ValidateJWTMiddleware, async (req, res) => {
       is_sideboard: isSideboard
     });
   }
+  const identifiers = workableCardList.map(card => ({ name: card.name }));
+  const response = await fetch("https://api.scryfall.com/cards/collection", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ identifiers })
+  });
+  if (!response.ok) {
+    res.status(500).send({ error: "Failed to fetch cards from Scryfall." });
+    return;
+  }
+  const scryfallData = await response.json();
+  const foundCards = scryfallData.data; // array of matched cards
+  const notFound = scryfallData.not_found; // array of unmatched identifiers
+  console.log("Found cards:", foundCards);
+  console.log("Not found identifiers:", notFound);
   for (const card of workableCardList) {
-    const scryfallLookup = `https://api.scryfall.com/cards/named?fuzzy=${encodeURIComponent(card.name)}`;
-    const response = await fetch(scryfallLookup);
-    let resJson = null;
-    if (!response.ok) {
-      await sleep(500); // Sleep for 500ms before the next request to avoid hitting rate limits
-      const retry = await fetch(scryfallLookup);
-      if (!retry.ok) {
+    const matchedCard = foundCards.find((c: any) => c.name.toLowerCase() === card.name.toLowerCase());
+    if (!matchedCard) {
       failedCards.push(card.name);
       continue;
-      }
-      const retryJson = await retry.json();
-      resJson = retryJson;
     } else {
-      resJson = await response.json();
-    }
-    const { error } = await supabase.from("decklist_cards").insert([{
-      deck_id: req.params.id,
-      scryfall_id: resJson.id,
-      quantity: card.count,
-      is_sideboard: card.is_sideboard
-    }]);
-    await sleep(200); // Sleep for 200ms before the next request to avoid hitting rate limits
-    if (error) {
-      res.status(500).send({ error: error.message });
-      return;
+      insertRows.push({
+        deck_id: req.params.id,
+        scryfall_id: matchedCard.id,
+        quantity: card.count,
+        is_sideboard: card.is_sideboard
+      });
     }
   }
-   res.send({ message: "Cards added successfully.", failedCards });
+  const { error } = await supabase.from("decklist_cards").insert(insertRows);
+  if (error) {
+    res.status(500).send({ error: error.message });
+    return;
+  }
+  res.send({ message: "Cards added successfully.", failedCards });
 });
 
 // PATCH CALLS START HERE

@@ -5,6 +5,17 @@ import ValidateJWTMiddleware from "../middleware/auth.js";
 const VALID_COLORS = ["W", "U", "B", "R", "G", "C"];
 
 const router = Router();
+// GET CALLS START HERE
+router.get("/", async (req, res) => {
+  const { data, error } = await supabase.from("archetypes").select("*");
+  if (error) {
+    res.status(500).send({ error: error.message });
+  } else {
+    res.send(data);
+  }
+});
+
+// POST CALLS START HERE
 router.post("/", ValidateJWTMiddleware, async (req, res) => {
   const { name, colors } = req.body;
   if (!name) {
