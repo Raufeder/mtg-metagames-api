@@ -5,7 +5,6 @@ import archetypesRouter from "./routes/archetypes.js";
 import decksRouter from "./routes/decks.js";
 import searchRouter from "./routes/search.js";
 import setsRouter from "./routes/sets.js";
-import ValidateJWTMiddleware from "./middleware/auth.js";
 import cors from "cors";
 
 const app = express();
