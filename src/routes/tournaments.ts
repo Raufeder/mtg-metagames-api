@@ -15,12 +15,13 @@ router.get("/", async (req, res) => {
 
 // PATCH CALLS START HERE
 router.patch("/:id", ValidateJWTMiddleware, async (req, res) => {
-  const { name, location, start_date, end_date } = req.body;
+  const { name, location, start_date, end_date, metagame_id } = req.body;
   const updates: Record<string, any> = {};
   if (name !== undefined) updates.name = name;
   if (location !== undefined) updates.location = location;
   if (start_date !== undefined) updates.start_date = start_date;
   if (end_date !== undefined) updates.end_date = end_date;
+  if (metagame_id !== undefined) updates.metagame_id = metagame_id;
   if (Object.keys(updates).length === 0) {
     res.status(400).send({ error: "No fields to update." });
     return;

@@ -111,8 +111,8 @@ router.patch("/:id", ValidateJWTMiddleware, async (req, res) => {
     res.send(data);
   }
 });
-// DELETE CALLS START HERE
 
+// DELETE CALLS START HERE
 router.delete("/:id", ValidateJWTMiddleware, async (req, res) => {
   const { error } = await supabase.from("decks").delete().eq("id", req.params.id);
   if (error) {

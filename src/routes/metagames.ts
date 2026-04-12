@@ -250,4 +250,13 @@ router.delete("/:id", ValidateJWTMiddleware, async (req, res) => {
   }
 });
 
+router.delete("/:id/archetypes/:archetype_id", ValidateJWTMiddleware, async (req, res) => {
+  const { error } = await supabase.from("metagames_archetypes").delete().eq("metagame_id", req.params.id).eq("archetype_id", req.params.archetype_id);
+  if (error) {
+    res.status(500).send({ error: error.message });
+  } else {
+    res.status(204).send();
+  }
+});
+
 export default router;
