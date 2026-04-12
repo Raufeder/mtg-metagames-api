@@ -90,4 +90,46 @@ router.post("/:id/cards", ValidateJWTMiddleware, async (req, res) => {
    res.send({ message: "Cards added successfully.", failedCards });
 });
 
+// PATCH CALLS START HERE
+router.patch("/:id", ValidateJWTMiddleware, async (req, res) => {
+  const { player_name, name, placement, archetype_id, tournament_id } = req.body;
+  const updates: Record<string, any> = {};
+  if (name !== undefined) updates.name = name;
+  if (player_name !== undefined) updates.player_name = player_name;
+  if (placement !== undefined) updates.placement = placement;
+  if (archetype_id !== undefined) updates.archetype_id = archetype_id;
+  if (tournament_id !== undefined) updates.tournament_id = tournament_id;
+  if (Object.keys(updates).length === 0) {
+    res.status(400).send({ error: "No fields to update." });
+    return;
+  }
+  const { data, error } = await supabase.from("decks").update(updates).eq("id", req.params.id).select("*").single()
+    if (error) {
+    res.status(500).send({ error: error.message });
+    return;
+  } else {
+    res.send(data);
+  }
+});
+// DELETE CALLS START HERE
+
+router.delete("/:id", ValidateJWTMiddleware, async (req, res) => {
+  const { error } = await supabase.from("decks").delete().eq("id", req.params.id);
+  if (error) {
+    res.status(500).send({ error: error.message });
+  } else {
+    res.status(204).send();
+  }
+});
+
+router.delete("/:id/cards/:scryfall_id", ValidateJWTMiddleware, async (req, res) => {
+  const { is_sideboard } = req.query;
+  const { error } = await supabase.from("decklist_cards").delete().eq("deck_id", req.params.id).eq("scryfall_id", req.params.scryfall_id).eq("is_sideboard", is_sideboard === "true");
+  if (error) {
+    res.status(500).send({ error: error.message });
+  } else {
+    res.status(204).send();
+  }
+});
+
 export default router;

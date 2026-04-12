@@ -4,6 +4,7 @@ import ValidateJWTMiddleware from "../middleware/auth.js";
 
 const router = Router();
 
+// GET CALLS START HERE
 router.get("/", async (req, res) => {
   const { data, error } = await supabase.from("metagames").select("*");
   if (error) {
@@ -48,6 +49,7 @@ router.get("/:id/archetypes/:archetype_id", async (req, res) => {
   }
 });
 
+// POST CALLS START HERE
 router.post("/", ValidateJWTMiddleware, async (req, res) => {
   const {start_date, end_date, name, format} = req.body;
   const acceptableFormats = ["Standard", "Modern", "Pioneer", "Legacy", "Vintage", "Block", "Extended"];
@@ -215,6 +217,37 @@ router.post("/:id/restrictedlist", ValidateJWTMiddleware, async (req, res) => {
     }
   }
    res.send({ message: "Cards added to restrictedlist successfully." });
+});
+
+// PATCH CALLS START HERE
+router.patch("/:id", ValidateJWTMiddleware, async (req, res) => {
+  const { name, format, start_date, end_date } = req.body;
+  const updates: Record<string, any> = {};
+  if (name !== undefined) updates.name = name;
+  if (format !== undefined) updates.format = format;
+  if (start_date !== undefined) updates.start_date = start_date;
+  if (end_date !== undefined) updates.end_date = end_date;
+  if (Object.keys(updates).length === 0) {
+    res.status(400).send({ error: "No fields to update." });
+    return;
+  }
+  const { data, error } = await supabase.from("metagames").update(updates).eq("id", req.params.id).select("*").single()
+    if (error) {
+    res.status(500).send({ error: error.message });
+    return;
+  } else {
+    res.send(data);
+  }
+});
+// DELETE CALLS START HERE
+
+router.delete("/:id", ValidateJWTMiddleware, async (req, res) => {
+  const { error } = await supabase.from("metagames").delete().eq("id", req.params.id);
+  if (error) {
+    res.status(500).send({ error: error.message });
+  } else {
+    res.status(204).send();
+  }
 });
 
 export default router;
